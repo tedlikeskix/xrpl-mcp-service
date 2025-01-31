@@ -5,8 +5,15 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
 from xrpl.clients import JsonRpcClient
+import os
+from dotenv import load_dotenv
 
 from .handlers import XRPLRequestHandler
+
+load_dotenv()
+
+# Use mainnet URL
+XRPL_NODE = os.getenv('XRPL_NODE_URL', 'https://xrplcluster.com')
 
 class MCPRequest(BaseModel):
     type: str
@@ -17,12 +24,12 @@ class MCPResponse(BaseModel):
     error: Optional[str] = None
 
 class XRPLMCPServer:
-    def __init__(self, xrpl_url: str = "https://s.altnet.rippletest.net:51234"):
+    def __init__(self, xrpl_url: str = XRPL_NODE):
         self.client = JsonRpcClient(xrpl_url)
         self.handler = XRPLRequestHandler(self.client)
         self.app = FastAPI(
             title="XRPL MCP Service",
-            description="MCP server for interacting with the XRP Ledger",
+            description="MCP server for interacting with the XRP Ledger Mainnet",
             version="0.1.0"
         )
         self._setup_routes()
@@ -31,7 +38,24 @@ class XRPLMCPServer:
         @self.app.post("/mcp/v1")
         async def handle_mcp_request(request: MCPRequest) -> MCPResponse:
             """
-            Handle MCP requests for XRPL interactions
+            Handle MCP requests for XRPL interactions.
+            
+            Example requests:
+            ```json
+            {
+                "type": "account_info",
+                "params": {
+                    "account": "rsuUjfWxrACCAwGQDsNeZUhpzXf1n1NK5Z"
+                }
+            }
+            ```
+            
+            ```json
+            {
+                "type": "server_info",
+                "params": {}
+            }
+            ```
             """
             try:
                 result = await self.handler.handle_request(
@@ -47,9 +71,14 @@ class XRPLMCPServer:
             """
             Health check endpoint
             """
-            return {"status": "healthy"}
+            try:
+                # Try to get server info as health check
+                server_info = await self.handler.handle_request("server_info", {})
+                return {"status": "healthy", "xrpl_connected": True}
+            except:
+                return {"status": "unhealthy", "xrpl_connected": False}
 
-def create_app(xrpl_url: str = "https://s.altnet.rippletest.net:51234") -> FastAPI:
+def create_app(xrpl_url: str = XRPL_NODE) -> FastAPI:
     """
     Create and configure the FastAPI application
     """
