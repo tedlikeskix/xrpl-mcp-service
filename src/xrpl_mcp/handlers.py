@@ -43,28 +43,32 @@ class XRPLRequestHandler:
     async def _handle_account_info(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Get account information"""
         response = self.client.request(AccountInfo(
-            account=params.get("account")
+            account=params.get("account"),
+            ledger_index="validated"
         ))
         return response.result
 
     async def _handle_account_lines(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Get account trust lines"""
         response = self.client.request(AccountLines(
-            account=params.get("account")
+            account=params.get("account"),
+            ledger_index="validated"
         ))
         return response.result
 
     async def _handle_account_nfts(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Get account NFTs"""
         response = self.client.request(AccountNFTs(
-            account=params.get("account")
+            account=params.get("account"),
+            ledger_index="validated"
         ))
         return response.result
 
     async def _handle_account_transactions(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Get account transactions"""
         response = self.client.request(AccountTx(
-            account=params.get("account")
+            account=params.get("account"),
+            ledger_index="validated"
         ))
         return response.result
 
@@ -91,6 +95,7 @@ class XRPLRequestHandler:
         """Get order book offers"""
         response = self.client.request(BookOffers(
             taker_gets=params.get("taker_gets"),
-            taker_pays=params.get("taker_pays")
+            taker_pays=params.get("taker_pays"),
+            ledger_index="validated"
         ))
         return response.result
