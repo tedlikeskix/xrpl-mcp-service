@@ -1,8 +1,12 @@
+"""
+XRPL MCP Service - FastAPI Server Implementation
+"""
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Dict, Any, Optional
 from xrpl.clients import JsonRpcClient
-from xrpl.models import AccountInfo, ServerInfo
+
+from .handlers import XRPLRequestHandler
 
 class MCPRequest(BaseModel):
     type: str
@@ -15,6 +19,7 @@ class MCPResponse(BaseModel):
 class XRPLMCPServer:
     def __init__(self, xrpl_url: str = "https://s.altnet.rippletest.net:51234"):
         self.client = JsonRpcClient(xrpl_url)
+        self.handler = XRPLRequestHandler(self.client)
         self.app = FastAPI(
             title="XRPL MCP Service",
             description="MCP server for interacting with the XRP Ledger",
@@ -25,24 +30,29 @@ class XRPLMCPServer:
     def _setup_routes(self):
         @self.app.post("/mcp/v1")
         async def handle_mcp_request(request: MCPRequest) -> MCPResponse:
+            """
+            Handle MCP requests for XRPL interactions
+            """
             try:
-                if request.type == "account_info":
-                    response = self.client.request(AccountInfo(
-                        account=request.params.get("account")
-                    ))
-                    return MCPResponse(result=response.result)
-                elif request.type == "server_info":
-                    response = self.client.request(ServerInfo())
-                    return MCPResponse(result=response.result)
-                else:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Unsupported request type: {request.type}"
-                    )
+                result = await self.handler.handle_request(
+                    request_type=request.type,
+                    params=request.params
+                )
+                return MCPResponse(result=result)
             except Exception as e:
                 return MCPResponse(result={}, error=str(e))
+        
+        @self.app.get("/health")
+        async def health_check():
+            """
+            Health check endpoint
+            """
+            return {"status": "healthy"}
 
 def create_app(xrpl_url: str = "https://s.altnet.rippletest.net:51234") -> FastAPI:
+    """
+    Create and configure the FastAPI application
+    """
     server = XRPLMCPServer(xrpl_url)
     return server.app
 
