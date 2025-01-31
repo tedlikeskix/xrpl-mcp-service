@@ -1,114 +1,173 @@
 # XRPL MCP Service
 
-A Model Context Protocol (MCP) server implementation for interacting with the XRP Ledger blockchain. This service allows AI models to interact with XRPL through standardized MCP endpoints.
+A Model Context Protocol (MCP) server providing comprehensive access to the XRP Ledger (XRPL). This service enables AI models to interact with XRPL through standardized endpoints.
 
-## Quick Start for Replit
+## Features
 
-1. Clone this repository in Replit
+### Account Information
+- `xrpl_account_info` - Basic account details
+- `xrpl_account_balances` - XRP and token balances (human-readable)
+- `xrpl_account_lines` - Trust lines
+- `xrpl_account_offers` - Active trading offers
+- `xrpl_account_nfts` - NFT holdings
+- `xrpl_account_tx` - Transaction history
+
+### Decentralized Exchange
+- `xrpl_order_book` - View order book for currency pairs
+- `xrpl_market_price` - Get current market prices
+- `xrpl_amm_info` - Automated Market Maker information
+
+### NFT Operations
+- `xrpl_nft_offers` - View NFT buy/sell offers
+
+### Trust Lines & Payments
+- `xrpl_set_trust_line` - Establish new trust lines
+- `xrpl_remove_trust_line` - Remove existing trust lines
+- `xrpl_payment_channels` - Payment channel information
+- `xrpl_find_path` - Payment path finding
+- `xrpl_deposit_auth` - Check payment authorization
+
+### System
+- `xrpl_server_info` - Node status and information
+- `xrpl_submit_tx` - Submit signed transactions
+
+## Setup
+
+1. Create a `.env` file:
+```env
+XRPL_NODE_URL=https://xrplcluster.com
+```
+
 2. Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install xrpl-py fastapi uvicorn python-dotenv
 ```
 
-3. Create a `.env` file with:
-```env
-XRPL_NODE_URL=https://s.altnet.rippletest.net:51234
-```
-
-4. Run the server:
+3. Run the server:
 ```bash
-uvicorn src.xrpl_mcp.server:create_app --host 0.0.0.0 --port 8080 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-## Available Endpoints
+## API Usage Examples
 
-### MCP Endpoint (`/mcp/v1`)
-Accepts POST requests with:
+### Get Account Info
 ```json
+POST /call-tool/xrpl_account_info
 {
-    "type": "string",  // Type of request
-    "params": {}       // Parameters for the request
+  "account": "rsuUjfWxrACCAwGQDsNeZUhpzXf1n1NK5Z"
 }
 ```
 
-### Available Request Types:
-1. Account Methods:
-   - `account_info`: Get basic account information
-   - `account_lines`: Get account trust lines
-   - `account_nfts`: Get account NFTs
-   - `account_transactions`: Get account history
-
-2. Server Methods:
-   - `server_info`: Get XRPL node status
-
-3. Transaction Methods:
-   - `submit_transaction`: Submit signed transaction
-   - `transaction_info`: Get transaction details
-
-## Testing
-
-1. Get Server Info:
-```bash
-curl -X POST http://localhost:8080/mcp/v1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "server_info",
-    "params": {}
-  }'
+### Get Account Balances
+```json
+POST /call-tool/xrpl_account_balances
+{
+  "account": "rsuUjfWxrACCAwGQDsNeZUhpzXf1n1NK5Z"
+}
 ```
 
-2. Get Account Info:
-```bash
-curl -X POST http://localhost:8080/mcp/v1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "account_info",
-    "params": {
-      "account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
-    }
-  }'
+### Set Trust Line
+```json
+POST /call-tool/xrpl_set_trust_line
+{
+  "wallet_seed": "sXXXXXXXXXXXXXXXXXXXX",
+  "currency": "USD",
+  "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+  "limit": "1000"
+}
 ```
 
-## Integration with Existing MCP Server
-
-To add this as a tool to your existing MCP server:
-
-1. Install XRPL dependencies:
-```bash
-pip install xrpl-py fastapi uvicorn
+### Get AMM Info
+```json
+POST /call-tool/xrpl_amm_info
+{
+  "asset": {
+    "currency": "XRP"
+  },
+  "asset2": {
+    "currency": "USD",
+    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+  }
+}
 ```
 
-2. Add to your tools/register_tools.py:
-```python
-from xrpl_mcp import create_app as create_xrpl_app
-
-def register_tools(mcp):
-    # Your existing tool registrations...
-    
-    # Register XRPL tools
-    xrpl_app = create_xrpl_app()
-    mcp.tool("xrpl")(xrpl_app)
+### Get Market Price
+```json
+POST /call-tool/xrpl_market_price
+{
+  "base_currency": {
+    "currency": "XRP"
+  },
+  "quote_currency": {
+    "currency": "USD",
+    "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B"
+  }
+}
 ```
 
-## Development
+## Project Structure
 
-1. Install dev dependencies:
-```bash
-pip install -r requirements-dev.txt
+```
+├── main.py              # FastAPI application entry point
+├── tools/
+│   ├── __init__.py
+│   ├── register_tools.py # Tool registration
+│   └── xrpl_tools.py    # XRPL endpoint implementations
 ```
 
-2. Run tests:
-```bash
-pytest
-```
+## Key Components
+
+1. **xrpl_tools.py**
+   - Core XRPL interaction functions
+   - Async implementation with event loop handling
+   - Error handling and response formatting
+
+2. **register_tools.py**
+   - MCP tool registration
+   - Endpoint mapping and configuration
+
+## Future Enhancements
+
+1. AMM (Liquidity Pool) Operations
+   - Create pools
+   - Add/remove liquidity
+   - Vote on pool parameters
+
+2. Advanced Trading
+   - Create/cancel offers
+   - Automated trading functions
+   - Price alerts
+
+3. NFT Operations
+   - Mint NFTs
+   - Create/accept offers
+   - Collection management
+
+## Common Issues
+
+1. **Async Event Loop**: If you see "asyncio.run() cannot be called from a running event loop", check the async implementation in xrpl_tools.py
+
+2. **Rate Limiting**: Consider implementing rate limiting for production use
 
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create a feature branch
+3. Implement your changes
+4. Submit a pull request
+
+## Important Notes
+
+- Always use "validated" ledger for production
+- Secure wallet seeds and private keys
+- Monitor transaction fees
+- Test thoroughly on testnet first
+
+## Resources
+
+- [XRPL Documentation](https://xrpl.org/docs.html)
+- [MCP Protocol Docs](https://docs.anthropic.com/claude/docs/model-context-protocol)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
 
 ## License
 
