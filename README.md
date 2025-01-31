@@ -1,38 +1,55 @@
 # XRPL MCP Service
 
-A Model Context Protocol (MCP) server implementation for interacting with the XRP Ledger blockchain. This service provides a standardized way for AI models to interact with the XRP Ledger.
+A Model Context Protocol (MCP) server implementation for interacting with the XRP Ledger blockchain. This service allows AI models to interact with XRPL through standardized MCP endpoints.
 
-## Prerequisites
+## Quick Start for Replit
 
-- Python 3.9 or higher
-- Poetry for dependency management
-- XRP Ledger account (for testing)
-
-## Quick Start
-
-1. Clone the repository:
-```bash
-git clone https://github.com/tedlikeskix/xrpl-mcp-service.git
-cd xrpl-mcp-service
-```
-
+1. Clone this repository in Replit
 2. Install dependencies:
 ```bash
-poetry install
+pip install -r requirements.txt
 ```
 
-3. Start the server:
-```bash
-poetry run uvicorn src.xrpl_mcp.server:create_app --reload
+3. Create a `.env` file with:
+```env
+XRPL_NODE_URL=https://s.altnet.rippletest.net:51234
 ```
 
-## Testing the Service
-
-You can test the service using curl commands. Here are some examples:
-
-1. Get server info:
+4. Run the server:
 ```bash
-curl -X POST http://localhost:8000/mcp/v1 \
+uvicorn src.xrpl_mcp.server:create_app --host 0.0.0.0 --port 8080 --reload
+```
+
+## Available Endpoints
+
+### MCP Endpoint (`/mcp/v1`)
+Accepts POST requests with:
+```json
+{
+    "type": "string",  // Type of request
+    "params": {}       // Parameters for the request
+}
+```
+
+### Available Request Types:
+1. Account Methods:
+   - `account_info`: Get basic account information
+   - `account_lines`: Get account trust lines
+   - `account_nfts`: Get account NFTs
+   - `account_transactions`: Get account history
+
+2. Server Methods:
+   - `server_info`: Get XRPL node status
+
+3. Transaction Methods:
+   - `submit_transaction`: Submit signed transaction
+   - `transaction_info`: Get transaction details
+
+## Testing
+
+1. Get Server Info:
+```bash
+curl -X POST http://localhost:8080/mcp/v1 \
   -H "Content-Type: application/json" \
   -d '{
     "type": "server_info",
@@ -40,9 +57,9 @@ curl -X POST http://localhost:8000/mcp/v1 \
   }'
 ```
 
-2. Get account info:
+2. Get Account Info:
 ```bash
-curl -X POST http://localhost:8000/mcp/v1 \
+curl -X POST http://localhost:8080/mcp/v1 \
   -H "Content-Type: application/json" \
   -d '{
     "type": "account_info",
@@ -52,80 +69,46 @@ curl -X POST http://localhost:8000/mcp/v1 \
   }'
 ```
 
-3. Check server health:
+## Integration with Existing MCP Server
+
+To add this as a tool to your existing MCP server:
+
+1. Install XRPL dependencies:
 ```bash
-curl http://localhost:8000/health
+pip install xrpl-py fastapi uvicorn
 ```
 
-## Integration with Your Existing Server
-
-To integrate this with your existing MCP server:
-
-1. Install the package in your project:
-```bash
-cd your-existing-project
-poetry add xrpl-mcp-service
-```
-
-2. Register the XRPL tools in your register_tools.py:
+2. Add to your tools/register_tools.py:
 ```python
-from xrpl_mcp.handlers import XRPLRequestHandler
-from xrpl.clients import JsonRpcClient
+from xrpl_mcp import create_app as create_xrpl_app
 
 def register_tools(mcp):
-    # Initialize XRPL client
-    client = JsonRpcClient("https://s.altnet.rippletest.net:51234")
-    handler = XRPLRequestHandler(client)
+    # Your existing tool registrations...
     
     # Register XRPL tools
-    @mcp.tool(name="xrpl_account_info")
-    async def handle_account_info(account: str):
-        return await handler._handle_account_info({"account": account})
-        
-    @mcp.tool(name="xrpl_server_info")
-    async def handle_server_info():
-        return await handler._handle_server_info({})
-
-    # Add more tools as needed
-```
-
-## Available Endpoints
-
-The service provides the following MCP-compatible endpoints:
-
-- Account Methods:
-  - account_info
-  - account_lines
-  - account_nfts
-  - account_transactions
-  
-- Server Methods:
-  - server_info
-  
-- Transaction Methods:
-  - submit_transaction
-  - transaction_info
-  
-- Trading Methods:
-  - book_offers
-
-## Error Handling
-
-The service uses standard HTTP status codes and returns errors in this format:
-
-```json
-{
-  "result": {},
-  "error": "Error description here"
-}
+    xrpl_app = create_xrpl_app()
+    mcp.tool("xrpl")(xrpl_app)
 ```
 
 ## Development
 
-To run in development mode with auto-reload:
+1. Install dev dependencies:
 ```bash
-poetry run uvicorn src.xrpl_mcp.server:create_app --reload --port 8000
+pip install -r requirements-dev.txt
 ```
+
+2. Run tests:
+```bash
+pytest
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
