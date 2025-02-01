@@ -1,0 +1,17 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - xrplNodeUrl
+    properties:
+      xrplNodeUrl:
+        type: string
+        description: The URL of the XRPL node to connect to.
+  commandFunction:
+    # A function that produces the CLI command to start the MCP on stdio.
+    |-
+    (config) => ({ command: 'uvicorn', args: ['src.xrpl_mcp.server:app', '--host', '0.0.0.0', '--port', '8000', '--reload'], env: { XRPL_NODE_URL: config.xrplNodeUrl } })
