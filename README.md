@@ -1,5 +1,7 @@
 # XRPL MCP Service
 
+[![smithery badge](https://smithery.ai/badge/@tedlikeskix/xrpl-mcp-service)](https://smithery.ai/server/@tedlikeskix/xrpl-mcp-service)
+
 A Model Context Protocol (MCP) server providing comprehensive access to the XRP Ledger (XRPL). This service enables AI models to interact with XRPL through standardized endpoints.
 
 ## Features
